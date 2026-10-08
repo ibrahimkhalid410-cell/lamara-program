@@ -265,6 +265,13 @@ table.lt td,table.lt th{text-align:left;vertical-align:top}
 .mrow2:last-child{border-bottom:0}
 .mrow2 b{text-align:right;font-variant-numeric:tabular-nums}
 
+.bodymap{padding:10px 4px}
+.bodymap svg{display:block;width:100%;height:auto}
+.weakfx{fill:#E5484D;opacity:.85;animation:wk 1.6s ease-in-out infinite}
+@keyframes wk{50%{opacity:.15}}
+.weakdot{display:inline-block;width:14px;height:14px;border-radius:4px;background:#E5484D;animation:wk 1.6s ease-in-out infinite}
+.mz.sel{stroke:#151A22;stroke-width:2.2}
+[data-theme=dark] .mz.sel{stroke:#fff}
 /* ---------- photos ---------- */
 .dip{position:relative;aspect-ratio:3/4;border-radius:var(--r2);overflow:hidden;background:var(--card2);border:1px solid var(--line);touch-action:none;user-select:none}
 .dip img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.1)}
@@ -539,6 +546,7 @@ const MEALS = {
 };
 
 const WHY = {
+ climb:['How does the climb work?','Every peak is a 4 kg milestone from 104 kg, the last and highest is your goal. Your real weigh-ins decide which peak you stand on. The figure on each peak is drawn from that weight: the further up, the leaner the waist and the wider the shoulders. Your old selves stay behind on the peaks you left. The date on the summit comes from your current pace.'],
  kcal:['Where does this number come from?','Your daily burn: Mifflin-St Jeor for men (10 × weight + 6.25 × height − 5 × age + 5), or Katch-McArdle (370 + 21.6 × lean mass) once your body fat is known, which suits muscular men better. Times an activity factor from your training days and steps. After 2–3 weeks of food and weigh-ins the page measures your real burn from your own numbers and uses that instead. Then minus a small deficit set by your pace.'],
  pace:['Why so slow now?','You dropped 16 kg in 5 weeks. To build muscle while getting leaner, slower is better: about 0.25–0.5% of bodyweight a week keeps strength and muscle (Garthe 2011). The faster the loss, the more muscle it costs.'],
  protein:['Why this much protein?','About 2 g per kg of bodyweight, the top of the range shown to maximise muscle gain with training (Morton 2018: benefit up to about 1.6–2.2 g/kg). Spread over 4–5 meals, each about 0.4 g per kg.'],
@@ -548,7 +556,7 @@ const WHY = {
  rest:['How is rest measured?','The timer starts when you tick a set and the next tick stops it. Supersets rest after the pair. Planned rest: 2–2.5 min after the main lift, 60–90 s for the rest.'],
  quick:['Quick log','Type it the way your coach writes it: 50*10 means 50 kg for 10 reps. For single-arm work, 15*10 is 15 kg for 10 reps on each arm (or 15*10/9 for 10 left, 9 right). For bodyweight or seconds, just the number.'],
  hud:['What does the telemetry mean?','BAT: today\'s readiness from your check-in. ALT: how much stronger your main lifts are since 3 September (estimated max). DIST: total tonnes lifted since day one. SPD: your weight trend in kg per week. HOME: kg from where you started (104).'],
- marble:['How does the Marble work?','Every muscle is carved from three real things: strength gained on its lifts since 3 September (average of its best 3 lifts, +80% = fully carved), hard sets done (160 = full, about the end of Mission 02), and how lean you are (from 104 kg toward your goal, plus waist). The stone polishes as you get leaner and every PR leaves a seam of gold. Mission 01 carved about half of it. Mission 02 finishes the statue.'],
+ marble:['How is the muscle map coloured?','Each muscle is scored from three real things: strength gained on its lifts since 3 September (+80% = full), hard sets done (160 = about the end of Mission 02), and how lean you are (weight toward your goal, plus waist). Five shades from light to deep: Starting, Building, Solid, Strong, Elite. The three lowest muscles under 45% pulse red, so you always know where the next work should go.'],
  cover:['How is the cover written?','Every week of Mission 02 is a new issue of Iron Era. The headlines come only from your logged numbers: kilos since 3 September, the PR of the week, flights and records. The picture is your latest Golden Era photo (it stays on this phone), or the Marble until you add one. Save it and post it: it is your progress, in the style of the classic magazines.'],
  photos:['Where are my photos?','Only on this phone. They are never uploaded, never synced, and not part of the backup code.'],
  bf:['How is body fat estimated?','US Navy formula for men from waist, neck and height. An estimate, but measured the same way every time it shows the direction clearly.'],
@@ -902,7 +910,7 @@ let FLOGN=6;
 function renderToday(){if(S.live&&!PAUSE){renderSession();return}_renderToday();startType();drawClimb(true);drawSparks();}
 function greet(){const h=new Date().getHours();return h<12?'Good morning,':h<18?'Good afternoon,':'Good evening,'}
 function climbInfo(){const s0=num(S.profile.startW)||CLIENT.weightStart,g=num(S.profile.goal)||CLIENT.goal,w=avg7()??latestW(),t=targets();
- const pct=clamp((s0-w)/(s0-g),0,1);const eta=t.kgWeek>0.02&&w>g?addDays(today(),Math.ceil((w-g)/t.kgWeek*7)):null;return{s0,g,w,pct,eta,t}}
+ const pct=clamp((s0-w)/(s0-g),0,1);const lw=latestW();const eta=t.kgWeek>0.02&&lw>g?addDays(today(),Math.ceil((lw-g)/t.kgWeek*7)):null;return{s0,g,w,pct,eta,t}}
 function nextTarget(day){const it=DAYS[day].items.find(i=>i.main)||DAYS[day].items[0];const id=resolveId(day,DAYS[day].items.indexOf(it),it);const last=lastFor(id);if(!last)return null;
  const e=EX[id];const best=last.s.reduce((a,s)=>metric(id,[Object.assign({d:1},s)])>metric(id,[Object.assign({d:1},a)])?s:a);return`${e.n} ${setTxt(e,best)}`}
 function _renderToday(){const nd=nextDay(),n=weekRaw(),wk=inWeek(n),C=climbInfo(),T=telemetry(),live=S.live,tg=C.t;const tot=dayTotals(today());
@@ -914,7 +922,7 @@ function _renderToday(){const nd=nextDay(),n=weekRaw(),wk=inWeek(n),C=climbInfo(
  <div class="card climb"><canvas id="climb" aria-label="The Climb: your weight from 104 kg toward the summit, every workout a waypoint"></canvas>
   <div class="climbh"><div><div class="climbt">The Climb</div><span class="pill good" style="margin-top:4px">${Math.round(C.pct*100)}% of the way</span></div><button class="replay" data-act="replay" aria-label="Fly the route again"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button></div>
   <div class="climbf"><div><span>Start</span><b>${fmt(s0,0)}</b></div><div><span>Now</span><b style="color:var(--acc)">${latestW().toFixed(1)}</b></div><div><span>Summit</span><b>${fmt(C.g,0)}</b></div><div><span>ETA</span><b>${C.eta?nice(C.eta):'–'}</b></div></div></div>
- <p class="small muted" style="margin:8px 2px 0">Height = your weight, every dot a workout, gold = a record day. Tap a dot to open it. ${whyBtn('climb')}</p>
+ <p class="small muted" style="margin:8px 2px 0">Every peak is 4 kg lighter. The drone lifts you up, your old self stays behind. Tap a peak. ${whyBtn('climb')}</p>
  ${live?`<div class="card" style="border-color:var(--acc)"><div class="lab">In progress</div><div class="row between" style="margin-top:4px"><b style="font-size:18px">${esc(dayName(live.day))}</b><span class="small muted">${live.steps.filter(st=>live.log[st.k].sets[st.i].d).length}/${live.steps.length} sets</span></div><div class="grid2" style="margin-top:12px"><button class="btn primary" data-act="resume">Resume</button><button class="btn" data-act="abandon">Cancel it</button></div></div>`:''}
  <div class="card"><div class="row between"><div class="lab">Today's step up</div><span class="small muted">${nEx} exercises · ~${mins} min</span></div>
   <h2 style="font-size:24px;margin-top:6px">${esc(D.n)} <span style="color:var(--mute);font-weight:600">· ${esc(D.s)}</span></h2>
@@ -955,63 +963,79 @@ function drawSparks(){document.querySelectorAll('[data-spark]').forEach(c=>{cons
  if(k==='s')drawSpark(c,strengthSeries(),hex(CV('--acc')),1);
  if(k==='p'){let n=0;const by=S.prs.slice().sort((a,b)=>a.d<b.d?-1:1);const v=[];by.forEach((p,i)=>{n++;if(i===by.length-1||by[i+1].d!==p.d)v.push(n)});drawSpark(c,v,hex(CV('--gold')),1)}})}
 
-/* ---------- The Climb canvas: real data. Height = bodyweight, x = date. The drone flies the route waypoint by waypoint. ---------- */
+/* ---------- The Climb: a range of peaks, one every 4 kg, the last and highest is the goal.
+   The drone lifts him from peak to peak; at every peak his old self stays behind and the next one is leaner. ---------- */
 let CLIMB=null,climbRAF=0;
 function srand(seed){let s=seed;return()=>(s=(s*16807)%2147483647)/2147483647}
+function milestones(){const s0=num(S.profile.startW)||CLIENT.weightStart,g=num(S.profile.goal)||CLIENT.goal;const M=[s0];let m=Math.ceil(s0/4)*4-4;if(m>=s0)m-=4;while(m>g+1.5){M.push(m);m-=4}M.push(g);return M}
+function reachedDate(m){const ws=weightsSorted();const w=ws.find(x=>x.kg<=m+.05);return w?w.d:null}
+function climbLegs(){const M=milestones(),C=climbInfo(),w=latestW();let c=0;M.forEach((m,i)=>{if(w<=m+.05)c=i});
+ return M.map((m,i)=>{let d=i===0?S.hstart:reachedDate(m);let eta=null;if(i>c&&C.t.kgWeek>.02)eta=addDays(today(),Math.ceil((w-m)/C.t.kgWeek*7));return{m,i,d:i<=c?d:null,eta,reached:i<=c}}).concat([]).map(o=>Object.assign(o,{cur:o.i===c}))}
 function buildClimb(c){const dpr=Math.min(2,window.devicePixelRatio||1),W=c.clientWidth,H=c.clientHeight;c.width=W*dpr;c.height=H*dpr;
- const C=climbInfo(),s0=C.s0,g=C.g;const t0=S.hstart;const endD=C.eta&&C.eta>addDays(S.start,83)?C.eta:addDays(S.start,83);const span=diffDays(t0,endD)+6;
- const padL=18,padR=26,yTop=H*.22,yBot=H*.88;const hs=diffDays(t0,S.start),fs=Math.max(1,diffDays(S.start,endD)+6),A=.42;const X=d=>{const k=diffDays(t0,d);const f=k<=hs?A*k/hs:A+(1-A)*(k-hs)/fs;return padL+(W-padL-padR)*f},Y=w=>yBot-(s0-w)/(s0-g)*(yBot-yTop);
- const ws=weightsSorted();const wAt=d=>{if(!ws.length)return s0;if(d<=ws[0].d)return ws[0].kg;for(let i=1;i<ws.length;i++){if(ws[i].d>=d){const a=ws[i-1],b=ws[i],f=diffDays(a.d,d)/Math.max(1,diffDays(a.d,b.d));return a.kg+(b.kg-a.kg)*f}}return ws[ws.length-1].kg};
- /* smooth route through the weigh-ins */
- const route=[];const lastD=ws.length?ws[ws.length-1].d:t0;for(let d=t0;d<lastD;d=addDays(d,2))route.push([X(d),Y(wAt(d))]);const nowW=wAt(lastD);route.push([X(lastD),Y(nowW)]);
- const summitD=C.eta||endD;const summit=[X(summitD),Y(g)];
- const proj=[];const steps=24,st=route[route.length-1];for(let i=0;i<=steps;i++){const f=i/steps;const e=f<.5?2*f*f:1-Math.pow(-2*f+2,2)/2;proj.push([st[0]+(summit[0]-st[0])*f,Y(nowW+(g-nowW)*(f*.7+e*.3))])}
- const pts=S.sessions.slice().sort((a,b)=>a.d<b.d?-1:1).map(s=>({x:X(s.d),y:Y(wAt(s.d)),id:s.id,pr:((s.prs||[]).length>=(s.h?3:1))?(s.prs||[]).length:0,h:s.h,d:s.d}));
- /* static layer */
- const bg=document.createElement('canvas');bg.width=c.width;bg.height=c.height;const x=bg.getContext('2d');x.scale(dpr,dpr);const dark=isDark();const R=srand(7);
- const sky=x.createLinearGradient(0,0,0,H);if(dark){sky.addColorStop(0,'#0B1322');sky.addColorStop(1,'#1A2433')}else{sky.addColorStop(0,'#D8E6FC');sky.addColorStop(.75,'#EEF3FB');sky.addColorStop(1,'#F7F8FA')}x.fillStyle=sky;x.fillRect(0,0,W,H);
- if(!dark){const sg=x.createRadialGradient(W*.8,H*.2,4,W*.8,H*.2,90);sg.addColorStop(0,'rgba(255,214,140,.85)');sg.addColorStop(.25,'rgba(255,224,170,.45)');sg.addColorStop(1,'rgba(255,224,170,0)');x.fillStyle=sg;x.fillRect(0,0,W,H);x.fillStyle='#FFE3A6';x.beginPath();x.arc(W*.8,H*.2,16,0,7);x.fill()}
- else{x.fillStyle='#F4EBD0';x.beginPath();x.arc(W*.8,H*.18,13,0,7);x.fill();x.fillStyle='#0E1727';x.beginPath();x.arc(W*.8+6,H*.18-4,12,0,7);x.fill()}
- const layer=(base,amp,seed,col,rough)=>{const r=srand(seed);x.fillStyle=col;x.beginPath();x.moveTo(0,H);let y=base;for(let px=0;px<=W;px+=6){y+=(r()-.5)*rough;y=clamp(y,base-amp,base+amp*.4);x.lineTo(px,y)}x.lineTo(W,H);x.closePath();x.fill()};
- layer(H*.5,H*.22,11,dark?'#1E2A3C':'#C9D7EE',26);layer(H*.62,H*.18,23,dark?'#243246':'#B3C5E3',22);
- /* the front mountain follows the real route, then falls away past the summit */
- const ridge=[];route.concat(proj.slice(1)).forEach(p=>ridge.push([p[0],p[1]+9]));const r2=srand(5);
- x.beginPath();x.moveTo(0,H);x.lineTo(0,ridge[0][1]+6);ridge.forEach(p=>x.lineTo(p[0],p[1]+(r2()-.5)*3));
- x.lineTo(summit[0]+18,summit[1]+30);x.lineTo(summit[0]+40,summit[1]+64);x.lineTo(W,summit[1]+90+(H-summit[1]-90)*.4);x.lineTo(W,H);x.closePath();
- const fg=x.createLinearGradient(0,yTop,0,H);if(dark){fg.addColorStop(0,'#33445E');fg.addColorStop(1,'#1B2535')}else{fg.addColorStop(0,'#8EA8D6');fg.addColorStop(1,'#6F8DC4')}x.fillStyle=fg;x.fill();
- /* snow cap */
- x.fillStyle=dark?'rgba(230,236,245,.85)':'#FFFFFF';x.beginPath();x.moveTo(summit[0]-26,summit[1]+24);x.lineTo(summit[0]-8,summit[1]+6);x.lineTo(summit[0],summit[1]+9);x.lineTo(summit[0]+18,summit[1]+30);x.lineTo(summit[0]+6,summit[1]+24);x.lineTo(summit[0]-6,summit[1]+30);x.closePath();x.fill();
- /* altitude guides in kg */
- x.font='600 10px Inter, system-ui, sans-serif';x.textAlign='right';[100,95,90,85].forEach(k=>{if(k<=g||k>=s0)return;const y=Y(k);x.strokeStyle=dark?'rgba(230,236,245,.12)':'rgba(21,26,34,.10)';x.setLineDash([3,5]);x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke();x.setLineDash([]);x.fillStyle=dark?'rgba(230,236,245,.55)':'rgba(21,26,34,.45)';x.fillText(k+' kg',W-6,y-4)});x.textAlign='left';
- /* base camp (end of Mission 01) */
- const bc=pts.filter(p=>p.h).slice(-1)[0];if(bc){x.fillStyle=dark?'#F5B94E':'#E07B2E';x.beginPath();x.moveTo(bc.x-9,bc.y+3);x.lineTo(bc.x,bc.y-10);x.lineTo(bc.x+9,bc.y+3);x.closePath();x.fill();x.fillStyle=dark?'#1A2433':'#fff';x.beginPath();x.moveTo(bc.x-2.5,bc.y+3);x.lineTo(bc.x,bc.y-3);x.lineTo(bc.x+2.5,bc.y+3);x.fill()}
- /* summit flag */
- x.strokeStyle=dark?'#E6EAF0':'#151A22';x.lineWidth=1.6;x.beginPath();x.moveTo(summit[0],summit[1]+4);x.lineTo(summit[0],summit[1]-24);x.stroke();x.fillStyle='#E5533D';x.beginPath();x.moveTo(summit[0],summit[1]-24);x.lineTo(summit[0]+15,summit[1]-19);x.lineTo(summit[0],summit[1]-14);x.fill();
- const lab=(cx,t,px,py,align)=>{cx.font='700 11px Inter, system-ui, sans-serif';const w=cx.measureText(t).width+14;let lx=align==='r'?px-w:align==='c'?px-w/2:px;lx=clamp(lx,4,W-w-4);cx.fillStyle=dark?'rgba(230,236,245,.94)':'rgba(21,26,34,.88)';cx.beginPath();cx.roundRect?cx.roundRect(lx,py-15,w,21,10.5):cx.rect(lx,py-15,w,21);cx.fill();cx.fillStyle=dark?'#0F141B':'#fff';cx.fillText(t,lx+7,py)};
- lab(x,`${fmt(g,0)} kg${C.eta?' · '+nice(C.eta):''}`,summit[0]-6,summit[1]-30,'r');
- if(bc)lab(x,'Base camp · M01',bc.x+16,bc.y+30,'l');
- x.fillStyle=dark?'rgba(230,236,245,.85)':'rgba(21,26,34,.75)';x.font='600 10.5px Inter, system-ui, sans-serif';x.fillText('3 Sep · '+fmt(s0,0)+' kg',route[0][0]+2,route[0][1]+22);
- CLIMB={c,bg,W,H,dpr,route,proj,pts,summit,nowW,dark,clouds:[[W*.15,H*.16,1],[W*.55,H*.1,.7],[W*.4,H*.28,.55]],stars:Array.from({length:40},()=>[R()*W,R()*H*.45,R()*1.2+.3,R()*6]),lab}}
-function routeLen(r){let L=0;for(let i=1;i<r.length;i++)L+=Math.hypot(r[i][0]-r[i-1][0],r[i][1]-r[i-1][1]);return L}
-function pointAt(r,f){const L=routeLen(r)*f;let acc=0;for(let i=1;i<r.length;i++){const s=Math.hypot(r[i][0]-r[i-1][0],r[i][1]-r[i-1][1]);if(acc+s>=L){const t=(L-acc)/(s||1);return[r[i-1][0]+(r[i][0]-r[i-1][0])*t,r[i-1][1]+(r[i][1]-r[i-1][1])*t,Math.atan2(r[i][1]-r[i-1][1],r[i][0]-r[i-1][0]),i]}acc+=s}const n=r.length-1;return[r[n][0],r[n][1],0,n]}
-function drawClimb(fly){const c=$('#climb');if(!c)return;cancelAnimationFrame(climbRAF);buildClimb(c);const K=CLIMB,x=c.getContext('2d');const t0=performance.now(),dur=fly&&!RM?3200:0;
- const acc=CV('--acc'),gold=CV('--gold');
- const frame=now=>{if(!c.isConnected||CLIMB!==K)return;const t=now-t0;const f=dur?clamp(t/dur,0,1):1;const e=f<.5?4*f*f*f:1-Math.pow(-2*f+2,3)/2;
-  x.setTransform(1,0,0,1,0,0);x.drawImage(K.bg,0,0);x.setTransform(K.dpr,0,0,K.dpr,0,0);
-  if(K.dark){K.stars.forEach(([sx,sy,r,ph])=>{x.fillStyle=`rgba(240,244,250,${.35+.35*Math.sin(now/700+ph)})`;x.beginPath();x.arc(sx,sy,r,0,7);x.fill()})}
+ const L=climbLegs(),N=L.length,cur=L.findIndex(l=>l.cur);const s0=L[0].m,g=L[N-1].m;const dark=isDark();
+ const padL=30,padR=34,base=H+2,lo=H*.70,hi=H*.24;const span=(W-padL-padR);
+ const peaks=L.map((l,i)=>{const f=i/(N-1);const x=padL+span*Math.pow(f,.92);const p=(s0-l.m)/(s0-g);let y=lo-(lo-hi)*p;if(i===N-1)y-=H*.06;return Object.assign({},l,{x,y,f:clamp((l.m-g)/(s0-g),0,1)})});
+ const bg=document.createElement('canvas');bg.width=c.width;bg.height=c.height;const x=bg.getContext('2d');x.scale(dpr,dpr);const R=srand(7);
+ const sky=x.createLinearGradient(0,0,0,H);if(dark){sky.addColorStop(0,'#0B1322');sky.addColorStop(1,'#1A2433')}else{sky.addColorStop(0,'#D3E3FC');sky.addColorStop(.8,'#EEF3FB');sky.addColorStop(1,'#F7F8FA')}x.fillStyle=sky;x.fillRect(0,0,W,H);
+ const top=peaks[N-1];
+ if(!dark){const sg=x.createRadialGradient(top.x-30,top.y+8,4,top.x-30,top.y+8,110);sg.addColorStop(0,'rgba(255,214,140,.9)');sg.addColorStop(.3,'rgba(255,224,170,.4)');sg.addColorStop(1,'rgba(255,224,170,0)');x.fillStyle=sg;x.fillRect(0,0,W,H);x.fillStyle='#FFE1A0';x.beginPath();x.arc(top.x-30,top.y+8,17,0,7);x.fill()}
+ else{x.fillStyle='#F4EBD0';x.beginPath();x.arc(top.x-34,top.y+2,13,0,7);x.fill();x.fillStyle='#0D1626';x.beginPath();x.arc(top.x-28,top.y-2,12,0,7);x.fill()}
+ /* far ranges */
+ const layer=(b,amp,seed,col)=>{const r=srand(seed);x.fillStyle=col;x.beginPath();x.moveTo(0,H);let y=b;for(let px=0;px<=W;px+=8){y+=(r()-.5)*amp;y=clamp(y,b-amp*1.4,b+amp*.4);x.lineTo(px,y)}x.lineTo(W,H);x.closePath();x.fill()};
+ layer(H*.62,18,11,dark?'#18233A':'#DCE6F7');layer(H*.72,14,23,dark?'#1E2B41':'#C9D7EE');
+ /* the peaks, left to right, each a little higher */
+ const sp=span/(N-1);
+ peaks.forEach((p,i)=>{const r=srand(31+i*7);const hw=sp*(.85+.1*r())+(i===N-1?sp*.35:0);const yb=base;
+  const pts=[[p.x-hw,yb],[p.x-hw*.62,p.y+(yb-p.y)*.55+r()*6],[p.x-hw*.3,p.y+(yb-p.y)*.24],[p.x-hw*.08,p.y+3],[p.x,p.y],[p.x+hw*.1,p.y+4],[p.x+hw*.34,p.y+(yb-p.y)*.3],[p.x+hw*.66,p.y+(yb-p.y)*.6+r()*6],[p.x+hw,yb]];
+  const goal=i===N-1,done=p.reached;const gr=x.createLinearGradient(0,p.y,0,yb);
+  if(goal){gr.addColorStop(0,dark?'#5A79B8':'#4C74C9');gr.addColorStop(1,dark?'#24324A':'#2F4E92')}
+  else if(done){gr.addColorStop(0,dark?'#3B4E6E':'#8EA8D6');gr.addColorStop(1,dark?'#1E2A3D':'#6F8DC4')}
+  else{gr.addColorStop(0,dark?'#2C3A52':'#B7C8E6');gr.addColorStop(1,dark?'#1C2638':'#9CB2DA')}
+  x.fillStyle=gr;x.beginPath();pts.forEach((q,k)=>k?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1]));x.closePath();x.fill();
+  /* shaded face */
+  x.fillStyle=dark?'rgba(0,0,0,.18)':'rgba(21,40,90,.10)';x.beginPath();x.moveTo(p.x,p.y);pts.slice(5).forEach(q=>x.lineTo(q[0],q[1]));x.lineTo(p.x+hw*.05,yb);x.closePath();x.fill();
+  /* snow */
+  const sn=goal?.3:.16;x.fillStyle=dark?'rgba(232,238,247,.9)':'#FFFFFF';x.beginPath();x.moveTo(p.x,p.y);x.lineTo(p.x+hw*.1,p.y+4);x.lineTo(p.x+hw*.34*(sn/.3)*1.0,p.y+(yb-p.y)*sn);x.lineTo(p.x+hw*.12,p.y+(yb-p.y)*sn*.75);x.lineTo(p.x,p.y+(yb-p.y)*sn);x.lineTo(p.x-hw*.12,p.y+(yb-p.y)*sn*.8);x.lineTo(p.x-hw*.3*(sn/.3)*1.0,p.y+(yb-p.y)*sn*.95);x.lineTo(p.x-hw*.08,p.y+3);x.closePath();x.fill();
+  /* weight tag under the summit */
+  x.font='700 10px Inter, system-ui, sans-serif';x.textAlign='center';x.fillStyle=goal?'#fff':(dark?'rgba(230,236,245,.75)':'rgba(21,26,34,.6)');if(!goal)x.fillText(fmt(p.m,0),p.x,p.y+(yb-p.y)*.5);x.textAlign='left'});
+ /* goal flag + glow */
+ x.strokeStyle=dark?'#E6EAF0':'#151A22';x.lineWidth=1.6;x.beginPath();x.moveTo(top.x+14,top.y+2);x.lineTo(top.x+14,top.y-26);x.stroke();x.fillStyle='#E5533D';x.beginPath();x.moveTo(top.x+14,top.y-26);x.lineTo(top.x+29,top.y-21);x.lineTo(top.x+14,top.y-16);x.fill();
+ const lab=(cx,t,px,py,align,bgc,fgc)=>{cx.font='700 11px Inter, system-ui, sans-serif';const w=cx.measureText(t).width+14;let lx=align==='r'?px-w:align==='c'?px-w/2:px;lx=clamp(lx,4,W-w-4);cx.fillStyle=bgc||(dark?'rgba(230,236,245,.94)':'rgba(21,26,34,.88)');cx.beginPath();cx.roundRect?cx.roundRect(lx,py-15,w,21,10.5):cx.rect(lx,py-15,w,21);cx.fill();cx.fillStyle=fgc||(dark?'#0F141B':'#fff');cx.fillText(t,lx+7,py)};
+ const goalTxt=`${fmt(g,0)} kg${top.eta?' · '+nice(top.eta):''}`;
+ /* dashed route between future tops */
+ x.setLineDash([3,5]);x.strokeStyle=dark?'rgba(230,236,245,.4)':'rgba(21,26,34,.3)';x.lineWidth=1.4;x.beginPath();peaks.slice(cur).forEach((p,k)=>{const q=[p.x,p.y-34];if(!k)x.moveTo(q[0],q[1]);else{const pr=peaks[cur+k-1];x.quadraticCurveTo((pr.x+p.x)/2,Math.min(pr.y,p.y)-60,q[0],q[1])}});x.stroke();x.setLineDash([]);
+ CLIMB={c,bg,W,H,dpr,peaks,cur,N,dark,lab,goalTxt,top,clouds:[[W*.12,H*.14,1],[W*.5,H*.08,.7],[W*.32,H*.3,.55]],stars:Array.from({length:44},()=>[R()*W,R()*H*.5,R()*1.2+.3,R()*6])}}
+/* a simple front-view person; f = 1 at the start weight, 0 at the goal (leaner, broader shoulders) */
+function drawPerson(x,cx,fy,f,o){const s=o.s||1,mu=1-f;x.save();x.translate(cx,fy);x.scale(s,s);
+ const sw=6.2+2.6*mu,ww=3.4+4.6*f,hw=4.4+2.6*f,arm=1.9+.9*mu+.6*f,leg=2.2+1.6*f;
+ x.beginPath();
+ x.moveTo(-hw,-12);x.quadraticCurveTo(-ww-1.4*f,-16,-sw+1.2,-21.5);x.quadraticCurveTo(-sw,-24.6,-sw+1.6,-25.4);x.lineTo(-1.8,-26.6);x.lineTo(1.8,-26.6);x.lineTo(sw-1.6,-25.4);x.quadraticCurveTo(sw,-24.6,sw-1.2,-21.5);x.quadraticCurveTo(ww+1.4*f,-16,hw,-12);x.closePath();
+ x.moveTo(-hw+.2,-12.5);x.lineTo(-hw+.4+leg*.2,0);x.lineTo(-hw+.4+leg*1.9,0);x.lineTo(-.5,-11);x.lineTo(.5,-11);x.lineTo(hw-.4-leg*1.9,0);x.lineTo(hw-.4-leg*.2,0);x.lineTo(hw-.2,-12.5);x.closePath();
+ [-1,1].forEach(k=>{x.moveTo(k*(sw-.6),-25);x.quadraticCurveTo(k*(sw+arm+.6*f),-19,k*(sw+arm*.6+f),-12.5);x.lineTo(k*(sw+arm*.6+f-arm),-12.8);x.quadraticCurveTo(k*(sw+.4),-18.5,k*(sw-2.2),-22)});
+ x.moveTo(3.6,-30.4);x.arc(0,-30.4,3.6,0,7);
+ if(o.dash){x.setLineDash([2,2.2]);x.strokeStyle=o.col;x.lineWidth=1/s;x.stroke();x.setLineDash([])}
+ else{x.fillStyle=o.col;x.fill()}
+ if(o.glow){x.shadowColor=o.col;x.shadowBlur=10;x.strokeStyle=o.col;x.lineWidth=1.2/s;x.stroke();x.shadowBlur=0}
+ x.restore()}
+function drawClimb(fly){const c=$('#climb');if(!c)return;cancelAnimationFrame(climbRAF);buildClimb(c);const K=CLIMB,x=c.getContext('2d');const LEG=820,legs=Math.max(0,K.cur);const dur=fly&&!RM?legs*LEG+300:0;const t0=performance.now();
+ const acc=CV('--acc'),gold=CV('--gold'),ink=K.dark?'#E6EAF0':'#151A22',ghost=K.dark?'rgba(230,236,245,.32)':'rgba(21,26,34,.26)';
+ const frame=now=>{if(!c.isConnected||CLIMB!==K)return;const t=now-t0;x.setTransform(1,0,0,1,0,0);x.drawImage(K.bg,0,0);x.setTransform(K.dpr,0,0,K.dpr,0,0);
+  if(K.dark)K.stars.forEach(([sx,sy,r,ph])=>{x.fillStyle=`rgba(240,244,250,${.35+.35*Math.sin(now/700+ph)})`;x.beginPath();x.arc(sx,sy,r,0,7);x.fill()});
   else K.clouds.forEach(([cx,cy,k])=>{const px=((cx+now*.006*k)%(K.W+120))-60;x.fillStyle='rgba(255,255,255,.85)';[[0,0,14],[12,-6,12],[24,0,13],[12,4,12]].forEach(([a,b,r])=>{x.beginPath();x.arc(px+a*k*1.4,cy+b*k*1.4,r*k*1.4,0,7);x.fill()})});
-  /* projected route */
-  x.setLineDash([4,6]);x.strokeStyle=K.dark?'rgba(230,236,245,.55)':'rgba(21,26,34,.45)';x.lineWidth=1.8;x.beginPath();K.proj.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]));x.stroke();x.setLineDash([]);
-  /* travelled route, drawn behind the drone */
-  const P=pointAt(K.route,e);x.strokeStyle=acc;x.lineWidth=3.2;x.lineCap='round';x.lineJoin='round';x.beginPath();for(let i=0;i<P[3];i++){const p=K.route[i];i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1])}x.lineTo(P[0],P[1]);x.stroke();
-  /* waypoints light up as the drone passes */
-  K.pts.forEach(p=>{if(p.x>P[0]+.5)return;const age=clamp((P[0]-p.x)/14,0,1);const r=(p.pr?3.6:2.6)*(1+.6*(1-age));x.fillStyle=p.pr?gold:(K.dark?'#E6EAF0':'#FFFFFF');x.strokeStyle=p.pr?(K.dark?'#1A2433':'#fff'):acc;x.lineWidth=1.4;x.beginPath();x.arc(p.x,p.y,r,0,7);x.fill();x.stroke()});
-  /* drone */
-  const bob=RM?0:Math.sin(now/420)*2.2,hx=P[0],hy=P[1]-26+bob;
-  x.fillStyle=K.dark?'rgba(0,0,0,.35)':'rgba(21,26,34,.14)';x.beginPath();x.ellipse(P[0],P[1]+2,Math.max(4,12-bob),3,0,0,7);x.fill();
-  x.strokeStyle=K.dark?'rgba(106,151,255,.35)':'rgba(47,107,255,.25)';x.setLineDash([2,3]);x.beginPath();x.moveTo(hx,hy+6);x.lineTo(P[0],P[1]-2);x.stroke();x.setLineDash([]);
-  drawDrone(x,hx,hy,now,K.dark,acc);
-  if(f>=1)K.lab(x,`You · ${K.nowW.toFixed(1)} kg`,hx,hy-18,'c');
+  const prog=dur?clamp((t-150)/(legs*LEG),0,1)*legs:legs;const leg=Math.min(legs-1,Math.floor(prog)),lt=legs?prog-Math.max(0,leg):1;const arrived=prog>=legs;
+  /* future selves (dashed) and the goal self (gold) */
+  K.peaks.forEach((p,i)=>{if(i>K.cur&&i<K.N-1)drawPerson(x,p.x,p.y+1,p.f,{col:K.dark?'rgba(106,151,255,.7)':'rgba(47,107,255,.6)',dash:1,s:.9});if(i===K.N-1)drawPerson(x,p.x,p.y+1,0,{col:gold,glow:1,s:1.05})});
+  /* old selves left behind */
+  K.peaks.forEach((p,i)=>{if(i<K.cur&&(arrived||i<=leg))drawPerson(x,p.x,p.y+1,p.f,{col:ghost,s:.9})});
+  /* the drone and him */
+  let dx,dy,f;if(arrived||!legs){const p=K.peaks[K.cur];dx=p.x;dy=p.y-40;f=p.f}
+  else{const a=K.peaks[leg],b=K.peaks[leg+1];const e=lt<.5?2*lt*lt:1-Math.pow(-2*lt+2,2)/2;dx=a.x+(b.x-a.x)*e;const lift=Math.sin(Math.PI*lt)*34;dy=(a.y+(b.y-a.y)*e)-40-lift;f=a.f+(b.f-a.f)*e}
+  const bob=RM?0:Math.sin(now/420)*2;dy+=bob;
+  if(arrived||!legs){const p=K.peaks[K.cur];drawPerson(x,p.x,p.y+1,p.f,{col:ink,s:1});x.strokeStyle=K.dark?'rgba(106,151,255,.35)':'rgba(47,107,255,.3)';x.setLineDash([2,3]);x.beginPath();x.moveTo(dx,dy+6);x.lineTo(p.x,p.y-33);x.stroke();x.setLineDash([])}
+  else{x.strokeStyle=K.dark?'#97A2B2':'#687384';x.lineWidth=1;x.beginPath();x.moveTo(dx-5,dy+4);x.lineTo(dx-2,dy+10);x.moveTo(dx+5,dy+4);x.lineTo(dx+2,dy+10);x.stroke();drawPerson(x,dx,dy+43,f,{col:ink,s:1})}
+  drawDrone(x,dx,dy,now,K.dark,acc);
+  K.lab(x,K.goalTxt,K.top.x+4,K.top.y-36,'c',gold,'#1B1405');
+  if(arrived||!legs){const p=K.peaks[K.cur];K.lab(x,`You · ${latestW().toFixed(1)} kg`,p.x,dy-14,'c')}
   if(!RM)climbRAF=requestAnimationFrame(frame)};
  if(RM)frame(performance.now());else climbRAF=requestAnimationFrame(frame);c.onclick=climbTap}
 function drawDrone(x,cx,cy,t,dark,acc){x.save();x.translate(cx,cy);const tilt=RM?0:Math.sin(t/900)*.05;x.rotate(tilt);
@@ -1022,7 +1046,15 @@ function drawDrone(x,cx,cy,t,dark,acc){x.save();x.translate(cx,cy);const tilt=RM
  x.fillStyle=body;x.beginPath();x.roundRect?x.roundRect(-7,-4,14,8,3.5):x.rect(-7,-4,14,8);x.fill();
  x.fillStyle=acc;x.beginPath();x.arc(0,4.6,2.4,0,7);x.fill();
  x.fillStyle=(Math.floor(t/600)%2)?'#3CC48F':'#E5533D';x.beginPath();x.arc(-5,-1,1.2,0,7);x.fill();x.restore()}
-function climbTap(e){const K=CLIMB;if(!K)return;const r=K.c.getBoundingClientRect();const px=e.clientX-r.left,py=e.clientY-r.top;let best=null,bd=20*20;K.pts.forEach(p=>{const d=(p.x-px)**2+(p.y-py)**2;if(d<bd){bd=d;best=p.id}});if(best)showFlight(best)}
+function climbTap(e){const K=CLIMB;if(!K)return;const r=K.c.getBoundingClientRect();const px=e.clientX-r.left;let best=null,bd=1e9;K.peaks.forEach((p,i)=>{const d=Math.abs(p.x-px);if(d<bd){bd=d;best=i}});if(best!=null)showLeg(best)}
+function showLeg(i){const K=CLIMB,p=K.peaks[i],prev=K.peaks[i-1];const from=prev&&prev.d?prev.d:S.hstart,to=p.d||today();
+ const ss=i===0?[]:S.sessions.filter(s=>p.reached&&s.d>=from&&s.d<=to),prs=ss.reduce((a,s)=>a+(s.prs||[]).length,0);const goal=i===K.N-1;
+ sheet(`<div class="lab">${goal?'The summit':i===0?'Where it started':'Peak '+i+' of '+(K.N-1)}</div><h3 style="margin-top:4px">${fmt(p.m,0)} kg</h3>
+ <p class="small muted" style="margin-top:2px">${i===0?'3 September, day one with Coach Ibrahim.':p.reached?'Reached on '+nice(p.d)+'.':(p.eta?'On the current pace: around '+nice(p.eta)+'.':'Ahead.')}</p>
+ ${p.reached&&i>0?`<div class="grid3" style="margin-top:12px"><div class="tele"><span>Workouts</span><b>${ss.length}</b></div><div class="tele"><span>Volume</span><b>${fmt(ss.reduce((a,s)=>a+tonnage(s),0)/1000,0)} t</b></div><div class="tele"><span>Records</span><b style="color:var(--gold)">${prs}</b></div></div>`:''}
+ <p style="margin-top:12px">${goal?'Leaner, stronger, and the shoulders wider than the waist. The classic shape.':i<K.cur?'Your old self stays on this peak. You do not need him any more.':i===K.cur?'This is you now. The drone is ready for the next lift.':'Your next, leaner self is waiting up here.'}</p>
+ ${ss.length?`<div class="flog" style="margin-top:6px">${ss.slice(-4).reverse().map(s=>`<button class="fl" data-act="flight" data-id="${esc(s.id)}"><span class="ic">${pd(s.d).getDate()}</span><span><b>${esc(dayName(s.day))}</b><br><span class="small muted">${nice(s.d)}</span></span>${s.prs.length?`<span class="pill gold">${s.prs.length} PR</span>`:'<span></span>'}</button>`).join('')}</div>`:''}
+ <button class="btn block" style="margin-top:12px" data-act="close">Close</button>`)}
 function showFlight(id){const s=S.sessions.find(z=>z.id===id);if(!s)return;
  sheet(`<div class="lab">${nice(s.d)}${s.h?' · Mission 01':' · Week '+weekRaw(s.d)}</div><h3 style="margin-top:4px">${esc(dayName(s.day))}</h3>
  <div class="grid3" style="margin-top:12px"><div class="tele"><span>Sets</span><b>${setCount(s)}</b></div><div class="tele"><span>Volume</span><b>${fmt(tonnage(s)/1000,1)} t</b></div><div class="tele"><span>Records</span><b style="color:var(--gold)">${s.prs.length}</b></div></div>
@@ -1090,18 +1122,21 @@ function marbleSVG(D){const lean=D.lean;const tier=l=>l<.34?'b0':l<.67?'b1':'b2'
   ${fig(MF,LF,5,'FRONT')}${fig(MB,LB,215,'BACK')}</svg>`}
 function renderMarble(){const D=muscleData(),T=targets(),bf=T.bf,lm=latestMeasure();const s0=num(S.profile.startW)||CLIENT.weightStart,w=avg7()??latestW();
  const sel=MSEL&&D.m[MSEL];
- const info=sel?`<div class="row between"><b>${MUSC[MSEL]}</b><span class="mono">${Math.round(sel.lv*100)}% carved</span></div>
-  <div class="small" style="margin-top:6px">Strength: ${sel.gain!=null?(sel.gain>=0?'+':'')+Math.round(sel.gain*100)+'% on its lifts':'no lift tracked yet'} · Hard sets: ${Math.round(sel.sets)} · Gold seams (PRs): ${sel.prs}<br>Last worked: ${sel.last?nice(sel.last.d)+', '+esc(dayName(sel.last.day)):'not yet'}</div>
-  ${sel.rows.length?`<div class="small muted" style="margin-top:6px">${sel.rows.slice(0,3).map(([id,a,b,p])=>`${esc(EX[id].n)}: ${a.toFixed(1)} → ${b.toFixed(1)} kg est. max (${p>=0?'+':''}${Math.round(p*100)}%)`).join('<br>')}</div>`:''}`:'<span class="small muted">Tap any muscle on the stone.</span>';
- const rows=Object.entries(D.m).sort((a,b)=>b[1].lv-a[1].lv).map(([m,d])=>`<div class="mrow2" data-act="marble" data-m="${m}"><span>${MUSC[m]}</span><span class="bar"><i style="width:${Math.round(d.lv*100)}%;background:var(--acc)"></i></span><b>${Math.round(d.lv*100)}%</b></div>`).join('');
+ const weak=weakSet(D),TN=['Starting','Building','Solid','Strong','Elite'];
+ const hits=m=>[...new Set(ORDER.flatMap(d=>DAYS[d].items.map(i=>i.id)).filter(id=>EXM[id]&&EXM[id][0].includes(m)))].slice(0,3).map(id=>EX[id].n);
+ const info=sel?`<div class="row between"><b style="font-size:17px">${MUSC[MSEL]}</b><span class="pill ${weak.has(MSEL)?'warn':''}">${weak.has(MSEL)?'Needs work':TN[tierOf(sel.lv)]} · ${Math.round(sel.lv*100)}%</span></div>
+  <div class="small" style="margin-top:8px">Strength ${sel.gain!=null?(sel.gain>=0?'+':'')+Math.round(sel.gain*100)+'% on its lifts':'not tracked yet'} · ${Math.round(sel.sets)} hard sets · ${sel.prs} records<br><span class="muted">Last worked: ${sel.last?nice(sel.last.d)+', '+esc(dayName(sel.last.day)):'not yet'}</span></div>
+  ${weak.has(MSEL)?`<div class="target" style="margin:10px 0 0;background:var(--warns)"><b style="color:var(--warn)">How Mission 02 fixes it</b><br>${hits(MSEL).length?esc(hits(MSEL).join(', '))+': hit them hard, and log every set.':'Extra sets are coming in the next block.'}</div>`:''}
+  ${sel.rows.length?`<div class="small muted" style="margin-top:8px">${sel.rows.slice(0,3).map(([id,a,b,p])=>`${esc(EX[id].n)}: ${a.toFixed(1)} → ${b.toFixed(1)} kg est. max (${p>=0?'+':''}${Math.round(p*100)}%)`).join('<br>')}</div>`:''}`:`<span class="small muted">Tap any muscle to see its numbers.${weak.size?' Red = the area that needs the most work right now.':''}</span>`;
+ const rows=Object.entries(D.m).sort((a,b)=>b[1].lv-a[1].lv).map(([m,d])=>`<div class="mrow2" data-act="marble" data-m="${m}"><span>${MUSC[m]}</span><span class="bar"><i style="width:${Math.round(d.lv*100)}%;background:${weakSet(D).has(m)?'var(--warn)':(isDark()?RAMPD:RAMP)[Math.max(2,tierOf(d.lv))]}"></i></span><b>${Math.round(d.lv*100)}%</b></div>`).join('');
  const hist=Object.entries(OLDNAME).map(([id,old])=>{const e=EX[id];const ss=S.sessions.filter(s=>s.h&&s.ex[id]);if(!ss.length)return'';const a=ss[0].ex[id].s[0],b=ss[ss.length-1].ex[id].s[0];
   const first=firstMetric(id),best=S.best.m[id];const p=first&&best?(best-first)/first:null;
   return`<tr><td><b>${esc(old)}</b>${a.e?' <span class="muted small">est.</span>':''}</td><td>${setTxt(e,a)}</td><td>${setTxt(e,b)}</td><td class="${p>0?'red':''}">${p!=null?(p>=0?'+':'')+Math.round(p*100)+'%':'-'}</td></tr>`}).join('');
- view().innerHTML=`<div class="top"><div><div class="hello">Since 3 September</div><div class="name">The Marble ${whyBtn('marble')}</div></div>${themeBtn()}</div><p class="small muted" style="margin-top:6px">Carved by your own numbers since 3 September. Every lift carves, every kilo lost polishes, every PR leaves a seam of gold.</p>
- <div class="marble" style="margin-top:12px" id="mwrap">${marbleSVG(D)}</div>
- <div class="legend"><span><i style="background:linear-gradient(135deg,#9C7220,#F6DA8A,#B8892B)"></i>Gold seam = PR</span><span>Polish (leaner): <b>${Math.round(D.lean*100)}%</b></span></div>
+ view().innerHTML=`<div class="top"><div><div class="hello">Since 3 September</div><div class="name">Muscle map ${whyBtn('marble')}</div></div>${themeBtn()}</div><p class="small muted" style="margin-top:6px">Every muscle gets darker as its numbers grow. Red pulse = the muscle that is falling behind.</p>
+ <div class="card bodymap" id="mwrap">${bodySVG(D,MSEL)}</div>
+ <div class="legend" style="align-items:center">${(isDark()?RAMPD:RAMP).map((c,i)=>`<i style="background:${c};margin:0 ${i===4?'8px':'0'} 0 0;border-radius:3px"></i>`).join('')}<span>Starting → Elite</span><span style="display:inline-flex;align-items:center;gap:6px"><i class="weakdot"></i>Needs work</span></div>
  <div class="panel" id="minfo" style="margin-top:10px">${info}</div>
- <section class="sec"><h3>Carving by muscle</h3><div class="panel" style="margin-top:10px">${rows}</div></section>
+ <section class="sec"><h3>Muscle by muscle</h3><div class="panel" style="margin-top:10px">${rows}</div></section>
  <section class="sec"><h3>The numbers</h3><div class="grid2" style="grid-template-columns:1fr 1fr 1fr;margin-top:10px">
   <div class="panel" style="padding:12px"><div class="stat">${w.toFixed(1)}<small>kg now (7-day avg)</small></div></div>
   <div class="panel" style="padding:12px"><div class="stat red">${(w-s0).toFixed(1)}<small>kg since 3 Sep</small></div></div>
@@ -1118,6 +1153,59 @@ function renderMarble(){const D=muscleData(),T=targets(),bf=T.bf,lm=latestMeasur
  drawWeightChart()}
 const MFIELDS=[['neck','Neck'],['chest','Chest'],['armR','Right arm (flexed)'],['armL','Left arm (flexed)'],['waist','Waist (navel)'],['hips','Hips'],['thighR','Right thigh'],['thighL','Left thigh'],['calf','Calf']];
 function drawWeightChart(){drawLine($('#wchart'),weightsSorted().map(w=>({d:w.d,v:w.kg})),{unit:' kg',goal:num(S.profile.goal)||CLIENT.goal,start:S.start})}
+
+/* =====================  MUSCLE MAP  =====================
+ An original, clean anatomical figure (front + back). Right half is drawn, left half mirrored.
+ Every muscle is one solid colour that deepens with real progress; muscles that lag behind pulse red. */
+const BODY_OUT=[[109,50],[111,63],[124,68],[140,71],[152,76],[161,87],[165,103],[166,121],[168,141],[169,156],[174,176],[176,198],[175,219],[178,233],[176,249],[170,256],[164,250],[163,236],[161,224],[156,204],[152,184],[150,168],[147,150],[145,134],[141,124],[140,140],[137,160],[133,181],[131,196],[134,212],[138,226],[140,248],[139,276],[135,304],[131,326],[131,340],[135,360],[134,382],[128,404],[124,420],[127,432],[126,442],[110,443],[108,432],[110,418],[108,396],[106,372],[107,350],[108,336],[106,312],[104,286],[102,262],[100,250]];
+/* [muscle key, points] for the right half */
+const BF=[
+ ['traps',[[108,57],[118,64],[137,70],[127,74],[112,70]]],
+ ['chest',[[102,80],[116,76],[134,78],[146,86],[150,96],[147,108],[138,118],[122,124],[106,122],[102,110]]],
+ ['delts',[[134,72],[149,75],[160,85],[165,101],[164,117],[158,128],[151,118],[146,102],[141,88]]],
+ ['biceps',[[148,123],[157,123],[163,134],[166,150],[161,162],[153,162],[149,146]]],
+ ['forearms',[[152,167],[165,165],[173,182],[176,202],[173,220],[165,221],[159,202],[155,184]]],
+ ['obliques',[[124,128],[137,131],[138,150],[135,170],[131,188],[124,197],[121,170],[121,146]]],
+ ['abs',[[102,127],[117,126],[118,145],[102,146]]],['abs',[[102,149],[118,148],[118,167],[102,168]]],['abs',[[102,171],[118,170],[117,189],[102,190]]],['abs',[[102,193],[116,192],[112,214],[102,226]]],
+ ['quads',[[110,240],[122,232],[126,262],[125,298],[120,320],[113,302],[109,270]]],
+ ['quads',[[126,234],[138,240],[140,268],[137,300],[131,322],[124,326],[127,298],[128,262]]],
+ ['quads',[[103,284],[110,294],[115,314],[111,330],[105,324],[103,304]]],
+ ['adductors',[[101,250],[107,244],[111,262],[107,282],[102,272]]],
+ ['calves',[[123,344],[132,350],[136,370],[131,394],[125,404],[122,380]]],
+ ['calves',[[110,348],[119,348],[121,378],[119,410],[114,413],[111,384]]]];
+const BB=[
+ ['traps',[[101,54],[110,60],[124,67],[142,73],[132,82],[119,96],[110,116],[101,134]]],
+ ['delts',[[136,73],[150,76],[160,86],[165,102],[163,118],[156,125],[148,110],[141,94],[137,84]]],
+ ['lats',[[114,98],[127,88],[140,90],[143,104],[134,111],[119,109]]],
+ ['lats',[[104,112],[120,110],[136,112],[143,120],[141,142],[135,164],[124,182],[110,192],[103,182]]],
+ ['triceps',[[145,118],[157,122],[164,140],[163,158],[155,163],[149,148],[146,132]]],
+ ['forearms',[[152,167],[165,165],[173,182],[176,202],[173,220],[165,221],[159,202],[155,184]]],
+ ['lowback',[[101,150],[108,160],[112,188],[110,208],[101,212]]],
+ ['glutes',[[101,214],[116,208],[132,212],[139,230],[136,250],[124,258],[108,256],[101,250]]],
+ ['hams',[[106,262],[118,260],[121,290],[119,322],[112,322],[107,300]]],
+ ['hams',[[122,262],[134,264],[137,290],[132,316],[124,326],[123,296]]],
+ ['calves',[[110,338],[121,332],[125,350],[124,376],[117,392],[110,376],[109,352]]],
+ ['calves',[[125,336],[133,342],[137,362],[132,384],[125,390],[126,358]]]];
+const BLF=[[[102,62],[106,76]],[[118,214],[124,234]],[[106,338],[112,342],[118,340]],[[148,166],[156,170]]];
+const BLB=[[[101,136],[101,210]],[[112,96],[124,104],[132,116]],[[106,332],[118,336],[128,334]],[[148,166],[156,170]]];
+const RAMP=['#D6E2FF','#A9C3FF','#6F98FF','#2F6BFF','#1A47C9'];
+const RAMPD=['#33415C','#3E5FA8','#5582F0','#6A97FF','#A7C3FF'];
+const tierOf=lv=>lv<.2?0:lv<.4?1:lv<.6?2:lv<.8?3:4;
+function weakSet(D){const L=Object.entries(D.m).filter(([,d])=>d.sets>0||d.lv>0).sort((a,b)=>a[1].lv-b[1].lv);const lowest=L.slice(0,3).filter(([,d])=>d.lv<.45).map(([k])=>k);return new Set(lowest)}
+function bodySVG(D,sel){const dark=isDark(),ramp=dark?RAMPD:RAMP,weak=weakSet(D);
+ const base=dark?'#262F3C':'#EEF1F5',edge=dark?'#46525F':'#C3CAD5',line=dark?'rgba(230,236,245,.18)':'rgba(21,26,34,.16)';
+ const mir='translate(200 0) scale(-1 1)';
+ const half=(list,lines)=>list.map(([m,p])=>{const d=D.m[m]||{lv:0};const c=ramp[tierOf(d.lv)];const path=smoothClosed(p);const w=weak.has(m);
+   return`<path d="${path}" fill="${c}" stroke="${dark?'rgba(0,0,0,.35)':'rgba(255,255,255,.9)'}" stroke-width="1.1" class="mz ${sel===m?'sel':''}" data-act="marble" data-m="${m}"/><path d="${path}" fill="url(#sheen)" pointer-events="none"/>${w?`<path d="${path}" class="weakfx" pointer-events="none"/>`:''}`}).join('')+lines.map(l=>`<path d="${smoothOpen(l)}" fill="none" stroke="${line}" stroke-width=".9" stroke-linecap="round" pointer-events="none"/>`).join('');
+ const fig=(list,lines,front,ox,lab)=>`<g transform="translate(${ox} 0)">
+  <ellipse cx="100" cy="30" rx="16.5" ry="21" fill="${base}" stroke="${edge}" stroke-width="1.2"/>
+  ${front?`<path d="M94 31q6 3 12 0" fill="none" stroke="${edge}" stroke-width="1" stroke-linecap="round"/>`:''}
+  <path d="${smoothOpen([[100,49]].concat(BODY_OUT))}" fill="${base}" stroke="${edge}" stroke-width="1.3"/><path d="${smoothOpen([[100,49]].concat(BODY_OUT))}" fill="${base}" stroke="${edge}" stroke-width="1.3" transform="${mir}"/>
+  <g filter="url(#mglow)">${half(list,lines)}<g transform="${mir}">${half(list,lines)}</g></g>
+  <text x="100" y="458" text-anchor="middle" font-size="10" font-weight="700" letter-spacing="1.5" fill="${dark?'#97A2B2':'#687384'}" font-family="Inter, sans-serif">${lab}</text></g>`;
+ return`<svg viewBox="0 0 420 466" role="img" aria-label="Muscle map, front and back"><defs>
+  <linearGradient id="sheen" x1="0" y1="0" x2=".6" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="${dark?.18:.35}"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="${dark?.25:.12}"/></linearGradient><filter id="mglow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur in="SourceAlpha" stdDeviation="2.2" result="b"/><feFlood flood-color="${dark?'#6A97FF':'#2F6BFF'}" flood-opacity="${dark?.45:.28}"/><feComposite in2="b" operator="in" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  ${fig(BF,BLF,1,0,'FRONT')}${fig(BB,BLB,0,220,'BACK')}</svg>`}
 const DISP='Manrope, Inter, system-ui, sans-serif',MONO='Inter, system-ui, sans-serif';
 function weightNear(d){let best=null,bd=99;S.weights.forEach(w=>{const k=Math.abs(diffDays(w.d,d));if(k<bd){bd=k;best=w.kg}});return bd<=10?best:null}
 function toBlobP(c,type,q){return new Promise(r=>c.toBlob(r,type,q))}
